@@ -10,8 +10,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\User;
+use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\RefreshToken;
+use Laravel\Passport\Token;
+
 class ApiAuthController extends Controller
 {
+    use HasApiTokens;
     use APITrait;
     public function register (Request $request) {
         $validator = Validator::make($request->all(), [
@@ -24,7 +29,7 @@ class ApiAuthController extends Controller
             return $this->returnError($validator->errors()->first(), 422);
         }
         $request['password']=Hash::make($request['password']);
-        $request['remember_token'] = Str::random(10);
+//        $request['remember_token'] = Str::random(10);
         $user = User::create($request->toArray());
         $token = $user->createToken('Laravel Password Grant Client')->accessToken;
         $user->api_token = $token;
@@ -61,13 +66,64 @@ class ApiAuthController extends Controller
 
 
     public function logout (Request $request) {
-        $token = $request->user()->token();
-        $token->revoke();
-            return $this->returnSuccessMessage('successfully',200 );
-//
+//        $token = $request->user()->token();
+//        $token->revoke();
+
+        $user = $request->user();
+        $tokens =  $user->tokens->pluck('id');
+        Token::whereIn('id', $tokens)
+            ->update(['revoked' => true]);
+        return $this->returnSuccessMessage('logout successfully',200 );
     }
+
+
     public function show (Request $request)
     {
-        return $this->returnData(true , 'User Login Successfully' , $request->user() , 200);
+        return $this->returnData(true , 'User data' , $request->user() , 200);
+    }
+
+
+    public function updateUserInfo (Request $request)
+    {
+       $user = $request->user()->update($request->all());
+//           return \response()->json($user);
+        return $this->returnData(true , 'User data' , User::find($request->user()->id) , 200);
+    }
+
+
+    public function updateUserPass (Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required|string|min:6',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+        if ($validator->fails())
+        {
+          return $this->returnError('something is wrong' , 403);
+        }
+
+        $user = $request->user();
+        if ($user) {
+            if (Hash::check($request->old_password, $user->password)) {
+                $request['new_password']=Hash::make($request['new_password']);
+                $user->password = $request['new_password'];
+                if($user->save()){
+                    $tokenUsed = $request->user()->token();
+                    $tokens =  $user->tokens->pluck('id');
+                    foreach ($tokens as $token){
+                        if($token != $tokenUsed->id){
+                            Token::where('id' , $token)
+                                ->update(['revoked' => true]);
+                        }
+                    }
+                    $user = User::find($request->user()->id) ;
+                    return $this->returnData(true , 'password changed Successfully',$user, 200);
+                }else {
+                    return $this->returnError('Something is Wrong', 422);
+                }
+            } else {
+                return $this->returnError('Something is Wrong', 422);
+            }
+    }
     }
 }

@@ -3,6 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\ApiAuthController;
+use App\Http\Controllers\API\BookmarkController;
+use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,14 +22,33 @@ use App\Http\Controllers\Auth\ApiAuthController;
 //Route::middleware('auth:api')->get('/user', function (Request $request) {
 //    return $request->user();
 //});
-Route::group(['prefix'=> 'user', 'middleware' => ['cors', 'json.response' , 'auth:api']], function () {
-    // our routes to be protected will go in here
+// our routes to be protected will go in here
+Route::group(['prefix'=> 'user', 'middleware' => ['cors', 'json.response' , 'auth:api'] ], function () {
     Route::get('/logout', [ApiAuthController::class,'logout']);
     Route::get('/show', [ApiAuthController::class,'show']);
+    Route::put('/update',[ApiAuthController::class,'updateUserInfo']);
+    Route::put('/changepass',[ApiAuthController::class,'updateUserPass']);
+    //Bookmark
+    Route::post('/add/bookmark', [BookmarkController::class,'store']);
+    Route::get('/bookmark/{id}', [BookmarkController::class,'show']);
+    Route::delete('/bookmark/{id}', [BookmarkController::class,'destroy']);
+    //Cart
+    Route::post('/add/cart', [CartController::class,'store']);
+    Route::get('/cart', [CartController::class,'show']);
+    Route::put('/cart/{id}', [CartController::class,'update']);
+    Route::delete('/cart/{id}', [CartController::class,'destroy']);
+
+
+
 });
 
+// our routes to be public will go in here
 Route::group(['prefix'=> 'user', 'middleware' => ['cors', 'json.response']], function () {
-    Route::post('/login', [ApiAuthController::class,'login'])->name('login.api');
-    Route::post('/register',[ApiAuthController::class,'register'])->name('register.api');
-//    Route::post('/logout', [ApiAuthController::class,'logout'])->name('logout.api');
+    Route::post('/login', [ApiAuthController::class,'login']);
+    Route::post('/register',[ApiAuthController::class,'register']);
+});
+
+Route::group([ 'middleware' => ['cors', 'json.response']], function () {
+        Route::get('products' , [ProductController::class , 'index']);
+        Route::get('product/{id}' , [ProductController::class , 'show']);
 });
