@@ -32,7 +32,7 @@ class ApiAuthController extends Controller
 //        $request['remember_token'] = Str::random(10);
         $user = User::create($request->toArray());
         $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-        $user->api_token = $token;
+        $user->token = $token;
         return $this->returnData(true , 'Create User Done Successfully',$user, 200);
     }
 
@@ -51,7 +51,7 @@ class ApiAuthController extends Controller
         if ($user) {
             if (Hash::check($request->password, $user->password)) {
                 $token = $user->createToken('User Login From App')->accessToken;
-                $user->api_token = $token;
+                $user->token = $token;
                 return $this->returnData(true , 'User Login Successfully',$user, 200);
             } else {
                 $response = ["message" => "Password mismatch"];
@@ -79,15 +79,18 @@ class ApiAuthController extends Controller
 
     public function show (Request $request)
     {
-        return $this->returnData(true , 'User data' , $request->user() , 200);
+        $user = $request->user();
+        $user->token = $this->returnUserToken($request->header('Authorization'));
+        return $this->returnData(true , 'User data' , $user , 200);
     }
 
 
     public function updateUserInfo (Request $request)
     {
        $user = $request->user()->update($request->all());
-//           return \response()->json($user);
-        return $this->returnData(true , 'User data' , User::find($request->user()->id) , 200);
+       $user =  User::find($request->user()->id);
+        $user->token = $this->returnUserToken($request->header('Authorization'));
+        return $this->returnData(true , 'User data' , $user  , 200);
     }
 
 
@@ -117,6 +120,7 @@ class ApiAuthController extends Controller
                         }
                     }
                     $user = User::find($request->user()->id) ;
+                    $user->token = $this->returnUserToken($request->header('Authorization'));
                     return $this->returnData(true , 'password changed Successfully',$user, 200);
                 }else {
                     return $this->returnError('Something is Wrong', 422);
