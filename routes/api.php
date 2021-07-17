@@ -44,6 +44,8 @@ Route::group(['prefix'=> 'user', 'middleware' => ['cors', 'json.response' , 'aut
     Route::post('/add/order', [OrderController::class,'store']);
     Route::get('/show/order/{id}/product', [OrderController::class,'showProductOfOrder']);
     Route::get('/show/order', [OrderController::class,'showOrderOfUSer']);
+    //Rating
+    Route::post('rate/product' , [RatingController::class , 'store']);
 
 });
 
@@ -55,7 +57,7 @@ Route::group(['prefix'=> 'user', 'middleware' => ['cors', 'json.response']], fun
 
 Route::group([ 'middleware' => ['cors', 'json.response']], function () {
     //product
-        Route::get('products' , [ProductController::class , 'index']);
+        Route::get('home' , [ProductController::class , 'index']);
         Route::get('product/{id}' , [ProductController::class , 'show']);
         //categories
         Route::get('/categories' , [CategoryController::class , 'index']);

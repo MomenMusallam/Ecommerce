@@ -19,6 +19,13 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::all();
+        foreach ($categories as $category){
+            $category->products = $category->products()->get();
+            foreach ( $category->products as $product){
+                $product->ratings = $product->ratings()->get();
+
+            }
+        }
         return $this->returnData(true , 'categories' , $categories , 200);
     }
 
@@ -51,7 +58,12 @@ class CategoryController extends Controller
      */
     public function show($id)
     {
-        return $this->returnData(true , 'single category' ,'Not work yet' , 200);
+        $products = Category::find($id)->products()->get();
+        foreach ($products as $product){
+            $product->ratings = $product->ratings()->get();
+
+        }
+        return $this->returnData(true , 'products for single category' ,$products , 200);
     }
 
     /**

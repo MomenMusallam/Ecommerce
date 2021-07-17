@@ -4,8 +4,12 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Traits\APITrait;
+use function PHPUnit\Framework\isEmpty;
+use function PHPUnit\Framework\isNull;
 
 class CartController extends Controller
 {
@@ -52,7 +56,10 @@ class CartController extends Controller
     public function show(Request $request)
     {
         $user_id = $request->user()->id;
-        $carts = Cart::Where('user_id', $user_id)->get();
+        $carts = User::find($user_id)->carts()->get();
+        foreach ($carts as $cart){
+            $cart->prodcut = Cart::find($cart->id)->product()->get();
+        }
         return $this->returnData(true, 'user cart get', $carts, 200);
     }
 
@@ -77,13 +84,16 @@ class CartController extends Controller
     public function update(Request $request, $id)
     {
         $user_id = $request->user()->id;
-        $request['user_id'] = $user_id;
-        $cart = Cart::find($id)->where('user_id', $user_id);
-        if ($cart->update($request->all())) {
-            return $this->returnData(true, 'update cart successes', Cart::find($id), 200);
-        } else {
-            return $this->returnData(false, 'update cart not successes', null, 500);
+        $cart = User::find($user_id)->carts()->where('id', $id)->first();
+        if(isset($cart)){
+//            $cart =$cart->first();
+            $result = $cart->update($request->all());
+            if($result){
+                $cart->product = Cart::find($cart->id)->product()->get();
+                return $this->returnData(true, 'Update cart success ', $cart, 200);
+            }
         }
+            return $this->returnData(false, 'Something is wrong', null, 500);
     }
 
     /**
@@ -95,13 +105,11 @@ class CartController extends Controller
     public function destroy(Request $request, $id)
     {
         $user_id = $request->user()->id;
-//        return $this->returnSuccessMessage('Delete Bookmark Success', $user_id);
-
-        $result = Cart::where('user_id', $user_id)->where('id' , $id)->delete();
+        $result = User::find($user_id)->carts()->where('id' , $id)->delete();
         if ($result) {
             return $this->returnSuccessMessage('Delete Bookmark Success', 200);
         } else {
-            return $this->returnError('Something is wong', 405);
+            return $this->returnError('Something is wong', 500);
         }
     }
 }

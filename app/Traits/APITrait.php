@@ -23,7 +23,7 @@ trait APITrait
             'status' => false,
             'message' => $message,
             'code' => $code,
-            'data' => ''
+            'data' => null
         ]);
     }
 
@@ -34,12 +34,9 @@ trait APITrait
             'status' => true,
             'message' => $message,
             'code' => $code,
-            'data' => ''
+            'data' => null
         ];
     }
-    public function returnUserToken($token)
-    {
-       return substr($token , 7);
-    }
+
 
 }

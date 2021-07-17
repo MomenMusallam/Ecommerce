@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Ad;
+use App\Models\Category;
+use App\Models\Offer;
+use App\Models\OrderProduct;
 use App\Models\Product;
 use App\Traits\APITrait;
 use Illuminate\Http\Request;
@@ -17,7 +21,25 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return $this->returnData(true , 'show all products' ,Product::All() , 200 );
+        $ads = Ad::latest()->limit(3)->get();
+
+        $Categories = Category::first()->limit(10)->get();
+
+        $dailyDeals = Offer::latest()->limit(10)->get();
+        foreach ($dailyDeals as $dailyDeal){
+            $dailyDealsProduct = $dailyDeal->product()->get();
+        }
+
+        $recent_added = Product::latest()->limit(10)->get();
+
+        $trendingProductOrders = OrderProduct::select('product_id', OrderProduct::raw('count(*) as total'))->groupBy('product_id')->orderBy('total','DESC')
+          ->limit(10)->get();
+        foreach ($trendingProductOrders as $trendProduct){
+            $trendingProducts[] = $trendProduct->product()->get();
+        }
+
+        $homeScreen = collect(['ads' =>$ads , 'categories' => $Categories , 'dailyDeals' => $dailyDealsProduct , 'Recently added' => $recent_added , 'trending'=>$trendingProducts]);
+        return $this->returnData(true , 'show all products' ,$homeScreen, 200 );
 
     }
 
@@ -58,7 +80,9 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        return $this->returnData(true , 'show single products' ,Product::find($id) , 200);
+        $product = Product::find($id);
+        $product->ratings = $product->ratings()->get();
+        return $this->returnData(true , 'show single products' ,$product , 200);
     }
 
     /**

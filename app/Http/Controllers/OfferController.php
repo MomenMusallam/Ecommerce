@@ -1,15 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Rating;
-use App\Traits\APITrait;
+use App\Models\Offer;
 use Illuminate\Http\Request;
 
-class RatingController extends Controller
+class OfferController extends Controller
 {
-    use APITrait;
     /**
      * Display a listing of the resource.
      *
@@ -38,21 +35,16 @@ class RatingController extends Controller
      */
     public function store(Request $request)
     {
-        $request['user_id'] = $request->user()->id;
-        $user_id =  $request['user_id'];
-        $request['status'] = 'rated';
-//        $check = User::find($user_id)->orders()->orderProducts()->where('product_id' , $request['product_id'])->get();
-
-        return $this->returnData(true , 'product rated' , Rating::create($request->all()) , 200 );
+        //
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  \App\Models\Offer  $offer
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Offer $offer)
     {
         //
     }
@@ -60,10 +52,10 @@ class RatingController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param  \App\Models\Offer  $offer
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Offer $offer)
     {
         //
     }
@@ -72,10 +64,10 @@ class RatingController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  \App\Models\Offer  $offer
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Offer $offer)
     {
         //
     }
@@ -83,10 +75,10 @@ class RatingController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  \App\Models\Offer  $offer
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Offer $offer)
     {
         //
     }

@@ -80,7 +80,7 @@ class ApiAuthController extends Controller
     public function show (Request $request)
     {
         $user = $request->user();
-        $user->token = $this->returnUserToken($request->header('Authorization'));
+        $user->token = $request->bearerToken();
         return $this->returnData(true , 'User data' , $user , 200);
     }
 
@@ -89,7 +89,7 @@ class ApiAuthController extends Controller
     {
        $user = $request->user()->update($request->all());
        $user =  User::find($request->user()->id);
-        $user->token = $this->returnUserToken($request->header('Authorization'));
+        $user->token =  $request->bearerToken();
         return $this->returnData(true , 'User data' , $user  , 200);
     }
 
@@ -120,7 +120,7 @@ class ApiAuthController extends Controller
                         }
                     }
                     $user = User::find($request->user()->id) ;
-                    $user->token = $this->returnUserToken($request->header('Authorization'));
+                    $user->token =  $request->bearerToken();
                     return $this->returnData(true , 'password changed Successfully',$user, 200);
                 }else {
                     return $this->returnError('Something is Wrong', 422);

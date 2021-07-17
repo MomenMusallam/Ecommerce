@@ -17,7 +17,7 @@ class CreateOrderProductsTable extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products','id');
             $table->foreignId('order_id')->constrained('orders','id');
-            $table->float('sale_price');
+            $table->float('sale_price' , 8 , 2);
             $table->integer('quantity')->default(1);
             $table->timestamps();
             $table->softDeletes($column = 'deleted_at', $precision = 0);

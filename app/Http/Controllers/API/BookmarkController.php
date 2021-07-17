@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bookmark;
+use App\Models\Product;
+use App\Models\User;
 use App\Traits\APITrait;
 use Illuminate\Http\Request;
 
@@ -17,8 +19,7 @@ class BookmarkController extends Controller
      */
     public function index()
     {
-//        $bookmarks = Bookmark::All();
-//        return $this->returnData(true , 'Get Data Successfully' , $bookmarks ,200);
+
     }
 
     /**
@@ -52,8 +53,12 @@ class BookmarkController extends Controller
     public function show(Request $request)
     {
         $user_id = $request->user()->id;
-        return $this->returnData(true , 'get bookmarks for particular user' , Bookmark::where('user_id' , $user_id)->get() , 200);
-//        return $this->returnData(true , 'get bookmarks for particular user' , $user , 200);
+        $bookmarks = User::find($user_id)->bookmarks()->get();
+        foreach ($bookmarks as $bookmark){
+            $bookmark->product = Bookmark::find($bookmark->id)->product()->get();
+        }
+        return $this->returnData(true , 'get bookmarks for particular user' ,$bookmarks , 200);
+
     }
 
     /**
@@ -90,11 +95,11 @@ class BookmarkController extends Controller
     public function destroy(Request $request ,$id)
     {
         $user_id= $request->user()->id;
-        $result = Bookmark::where('user_id',$user_id)->where('id' , $id)->delete();
-        if($result){
-            return $this->returnSuccessMessage('Delete Bookmark Success' , 200);
-        }else {
-            return $this->returnError('Something is wong',405);
+        $result = User::find($user_id)->bookmarks()->where('id' , $id)->delete();
+        if ($result) {
+            return $this->returnSuccessMessage('Delete Bookmark Success', 200);
+        } else {
+            return $this->returnError('Something is wong', 500);
         }
     }
 }

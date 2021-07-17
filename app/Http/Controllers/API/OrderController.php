@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Models\Product;
+use App\Models\User;
 use App\Traits\APITrait;
 use Illuminate\Http\Request;
 
@@ -41,17 +42,25 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+        //get user id
         $request['user_id'] = $request->user()->id;
         $user_id = $request['user_id'];
-        $cart = Cart::Where('user_id', $user_id)->get();
-        if ($cart) {
+        //get user cart
+        $userCarts = User::find($user_id)->carts()->get();
+
+        if (isset($userCarts[0])){
             $message = '';
-            foreach ($cart as $cart_product) {
+            //get products from cart and check if the quantity is available or not
+            foreach ($userCarts as $cart_product) {
                 $product = Product::find($cart_product->product_id);
-                if ($cart_product->quantity > $product->quantity) {
+                if($product->quantity < $cart_product->quantity){
                     $message = $message . $product->name . ',';
                 }
+                $product->required_quantity = $cart_product->quantity;
+                $products[] = $product;
             }
+
+            //if quantity not available
             if ($message != '') {
                 $message = $message . 'product quantity not available at the moment ';
                 return $this->returnError($message, 500);
@@ -59,20 +68,25 @@ class OrderController extends Controller
                 $order = Order::create($request->All());
                 if ($order != null) {
                     $total_price = 0;
-                    foreach ($cart as $cart_product) {
-                        $product = Product::find($cart_product->product_id);
-                        if ($cart_product->quantity >= $product->quantity) {
-                            OrderProduct::create(['product_id'=>$product->id, 'order_id'=>$order->id,'sale_price'=> $product->sale_price, 'quantity'=>$cart_product->quantity]);
-                            $total_price = $total_price + $product->sale_price * $cart_product->quantity;
-                            $product->update(['quantity' => $product->quantity - $cart_product->quantity]);
-                        }
+                    foreach ($products as $product){
+                            OrderProduct::create(['product_id'=>$product->id, 'order_id'=>$order->id,'sale_price'=> $product->sale_price, 'quantity'=>$product->required_quantity ]);
+                            $total_price = $total_price + $product->sale_price * $product->required_quantity;
+                            $available_quantity = $product->quantity - $product->required_quantity ;
+                            $product->quantity = $product->quantity - $product->required_quantity ;
+                            unset($product->required_quantity);
+                            $product->save();
                     }
                     $order->total_price = $total_price;
-                    $order->save();
+                     if($order->save()){
+                    User::find($user_id)->carts()->delete();
+                    $order->products = $products;
                    return $this->returnData(true ,'order started ', $order , 200);
+                }
                 }
             }
         }
+        return $this->returnData(true ,'order startsdsed ', 55 , 200);
+
     }
 
     /**
@@ -84,19 +98,27 @@ class OrderController extends Controller
     public function showOrderOfUSer(Request $request)
     {
         $user_id = $request->user()->id;
-        $orders = Order::where('user_id' , $user_id)->get();
+        $orders = User::find($user_id)->orders()->get();
+        foreach ($orders as $order){
+            $order->orderProducts = $order->orderProducts()->get();
+            foreach ($order->orderproducts as $orderProduct){
+                $orderProduct->product = $orderProduct->product()->get();
+            }
+        }
         return $this->returnData(true , 'orders fo single user' , $orders , 200);
     }
 
     public function showProductOfOrder(Request $request , $id)
     {
         $user_id = $request->user()->id;
-        $order = Order::find($id);
-//        return $this->returnSuccessMessage($order);
-        if($user_id == $order->user_id){
-        $products = OrderProduct::where('order_id' , $id)->get();
-        return $this->returnData(true , 'order products' , $products , 200);
-    }
+        $order = User::find($user_id)->orders()->where('id', $id)->first() ;
+        $orderProducts = $order->orderProducts()->get();
+            foreach ($orderProducts as  $orderProduct){
+                $orderProduct->product = $orderProduct->product()->first();
+            }
+
+
+        return $this->returnData(true , 'order products' , $orderProducts , 200);
     }
 
 
